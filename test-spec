@@ -16,15 +16,26 @@ components:
       type: object
       properties:
         task_id:
-          type: string
+          type: integer
+          description: The id of the identified task.
+          example: 17
         title:
           type: string
+          description: The name of the task.
+          example: Update POST /task endpoint request body
         description:
           type: string
+          description: Detailed information about a task.
+          example: Complete the request body section for POST/task endpoint.
         status:
           $ref: '#/components/schemas/StatusEnum'
-        component:
-          $ref: '#/components/schemas/ComponentEnum'
+        category:
+          $ref: '#/components/schemas/CategoryEnum'
+        last_updated:
+          type: string
+          format: date
+          description: The date of the latest edit to the task.
+          example: '2025-04-03'
         connected_tasks:
           type: array
           items:
@@ -34,40 +45,119 @@ components:
       properties:
         title:
           type: string
+          description: The name of the task.
+          example: Update POST /task endpoint request body
         description:
           type: string
+          description: Detailed information about a task.
+          example: Complete the request body section for POST/task endpoint.
         status:
           $ref: '#/components/schemas/StatusEnum'
-        component:
-          $ref: '#/components/schemas/ComponentEnum'
+        category:
+          $ref: '#/components/schemas/CategoryEnum'
         connected_tasks:
           type: array
+          description: An array of tasks related to the identified task.
           items:
-            $ref: '#/components/schemas/ConnectedTask'
+            type: integer
+            example: 12
+      required:
+        - title
+        - description
     ConnectedTask:
       type: object
+      description: A task related to the identified task.
       properties:
         task_id:
-          type: string
+          type: integer
+          description: The id of the identified task.
+          example: 12
         title:
           type: string
+          description: The name of the task.
+          example: Validate Technical Writer Tasks API OAS
         description:
           type: string
+          description: Detailed information about a task.
+          example: Correct errors in the existing TWT API OAS to validate the specification file.
         status:
           $ref: '#/components/schemas/StatusEnum'
     StatusEnum:
       type: string
-      enum: [OPEN, IN_PROGRESS, COMPLETED]
-    ComponentEnum:
+      enum:
+        - OPEN
+        - IN_PROGRESS
+        - COMPLETED
+      description: The position of the task in the workflow.
+      default: OPEN
+    CategoryEnum:
       type: string
-      enum: [API_DOCS, HELP_CENTER, SDK_DOCS, OAS_FILE]
+      enum:
+        - API_DOCS
+        - HELP_CENTER
+        - SDK_DOCS
+        - OAS_FILE
+      description: A label used for organizing and tracking a task.
+      default: API_DOCS
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required:
+        - error
+        - message
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Bad Request
+            message: The request does not match the expected schema or has incorrect fields.
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Not Found
+            message: The requested resource cannot be found.
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: The API key is missing or invalid.
+      headers:
+            WWW_Authenticate:
+              schema:
+                type: string
+    TooManyRequests:
+      description: Too Many Requests
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Too Many Requests
+            message: This endpoint has received too many requests from the current API key.
 security:
   - ApiKeyAuth: []
 paths:
   /tasks:
     get:
-      summary: Retrieve all technical writer tasks.
+      summary: Get Tech Writer tasks
       operationId: getTasks
+      description: Get all current technical writer tasks.
       parameters:
         - name: status
           in: query
@@ -75,12 +165,12 @@ paths:
           required: false
           schema:
             $ref: '#/components/schemas/StatusEnum'
-        - name: component
+        - name: category
           in: query
-          description: Filter tasks by component.
+          description: Filter tasks by category.
           required: false
           schema:
-            $ref: '#/components/schemas/ComponentEnum'
+            $ref: '#/components/schemas/CategoryEnum'
         - name: updatedAfter
           in: query
           description: Filter tasks that have been updated after a specific date (YYYY-MM-DD).
@@ -88,18 +178,74 @@ paths:
           schema:
             type: string
             format: date
+            example: YYYY-MM-DD
       responses:
         '200':
-          description: An array of tasks.
+          description: OK
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/Task'
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+              description: Request limit per hour.
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+              description: The number of requests left for the time window.
+            X-RateLimit-Reset:
+              schema:
+                type: string
+                format: date-time
+              description: The UTC date/time at which the current rate limit window resets.
         '401':
-          description: Unauthorized, API key missing or invalid.
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
   /task:
     post:
-      summary: Add a new technical writer task.
+      summary: Add new Tech Writer task
       operationId: addTask
+      description: Create a new technical writer task.
+      requestBody:
+        required: true
+        description: Create a new task.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskInput'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+              description: Request limit per hour.
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+              description: The number of requests left for the time window.
+            X-RateLimit-Reset:
+              schema:
+                type: string
+                format: date-time
+              description: The UTC date/time at which the current rate limit window resets.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
