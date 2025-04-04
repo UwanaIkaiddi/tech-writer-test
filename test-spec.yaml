@@ -192,16 +192,16 @@ paths:
             X-RateLimit-Limit:
               schema:
                 type: integer
-              description: Request limit per hour.
+              description: Request limit for the current time window.
             X-RateLimit-Remaining:
               schema:
                 type: integer
-              description: The number of requests left for the time window.
+              description: The number of requests left for the current time window.
             X-RateLimit-Reset:
               schema:
                 type: string
                 format: date-time
-              description: The UTC date/time at which the current rate limit window resets.
+              description: The date/time at which the current rate limit window resets.
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -231,16 +231,16 @@ paths:
             X-RateLimit-Limit:
               schema:
                 type: integer
-              description: Request limit per hour.
+              description: Request limit for the current time window.
             X-RateLimit-Remaining:
               schema:
                 type: integer
-              description: The number of requests left for the time window.
+              description: The number of requests left for the current time window.
             X-RateLimit-Reset:
               schema:
                 type: string
                 format: date-time
-              description: The UTC date/time at which the current rate limit window resets.
+              description: The date/time at which the current rate limit window resets.
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
