@@ -68,6 +68,10 @@ paths:
     get:
       summary: Retrieve all technical writer tasks.
       operationId: getTasks
+      description: | 
+        Retrieves all tasks assigned to the technical writer. 
+        Tasks can be filtered by status, component, or 
+        day of last update.
       parameters:
         - name: status
           in: query
@@ -103,3 +107,6 @@ paths:
     post:
       summary: Add a new technical writer task.
       operationId: addTask
+      description: >- 
+        Adds a new technical writing task. 
+        Tasks can include initial status and relevant components. 
